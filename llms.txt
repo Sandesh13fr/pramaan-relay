@@ -1,0 +1,52 @@
+# Pramaan Relay
+
+> Pramaan Relay is an independent civic-tech prototype that makes the delivery of a generated Digital Life Certificate to a Pension Disbursing Agency traceable, retryable, and accountable.
+
+Last reviewed: 2026-08-27
+Price: Free (INR 0)
+Status: Hackathon prototype; synthetic data only
+Affiliation: None. Not a government service.
+
+## The problem
+
+Jeevan Pramaan can successfully generate a Digital Life Certificate and make it available to a pension agency, while agency acceptance remains a separate step. If that downstream handoff is delayed, the pensioner can be left checking status, contacting the agency, or generating another certificate.
+
+## The process change
+
+`DRAFT -> GENERATED -> AVAILABLE_TO_PDA -> PDA_FETCHED -> ACCEPTED | REJECTED(reasonCode)`
+
+If `AVAILABLE_TO_PDA` exceeds the represented T+1 update target, Pramaan Relay creates `STALE_HANDOFF`, preserves the original Pramaan ID and payload hash, retries delivery idempotently, and routes one evidence-backed support case to the agency.
+
+## Proposed safeguard
+
+After a T+1 breach, an eligible certificate generated before its due date can enter `PROPOSED_CONTINUITY_HOLD` for at most seven days. The hold is one-time and non-renewable; an agency case opens simultaneously and acceptance, reasoned rejection, or expiry closes it. This is a policy proposal, not current law or a payment guarantee. It would require pension-authority adoption.
+
+## Safety boundary
+
+- No real Aadhaar, PPO, UAN, PAN, bank, OTP, biometric, or pension data.
+- No government APIs or live systems.
+- Generation and agency acceptance are never conflated.
+- AI may explain an agency reason but cannot change state.
+
+## Canonical evidence
+
+- Official FAQ: https://jeevanpramaan.gov.in/v2.0/misc/faq
+- Official process flow: https://cdnbbsr.s3waas.gov.in/s3dcf6070a4ab7f3afbfd2809173e0824b/uploads/2025/09/202509011995166356.pdf
+- Signed T+1 DoPPW memorandum mirror (source-location caveat): https://www.staffnews.in/wp-content/uploads/2025/02/SMS-to-pensioners-regarding-submission-of-Digital-Life-Certificate.pdf
+- Official 35th SCOVA minutes: https://www.doppw.gov.in/static/uploads/2026/05/50e06cc11615e760cbaaa63e88701369.pdf
+- Research register: evidence.md
+- Working experience: index.html
+
+## Frequently asked questions
+
+### Does it submit a real life certificate?
+
+No. The entire journey is simulated.
+
+### Does a Pramaan ID prove agency acceptance?
+
+No. The prototype explicitly separates generation, availability, fetch acknowledgement, and decision.
+
+### Why is this not another status tracker?
+
+A tracker reads state. Pramaan Relay models and tests an operating contract: stable receipt, payload hash, durable delivery, idempotent retries, agency acknowledgement, reason-coded decision, and a linked recovery path.

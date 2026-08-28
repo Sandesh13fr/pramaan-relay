@@ -1,0 +1,7 @@
+Use case: photorealistic-natural
+Asset type: wide hero image for a civic-tech prototype website
+Primary request: A dignified documentary-style scene showing a fictional elderly Indian woman at home after completing a digital life-certificate appointment, with a simple paper receipt and smartphone visible.
+Composition: wide landscape, subject on the right, quiet negative space on the left.
+Palette: deep forest green, charcoal, restrained coral, true off-white.
+Constraints: no readable personal information, Aadhaar, government emblem, official logo, bank logo, text, watermark, or affiliation-like cues.
+Generated with the built-in GPT Image tool on 2026-08-28.
