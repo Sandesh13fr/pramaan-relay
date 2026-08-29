@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import {
   ArrowDown,
   ArrowRight,
@@ -379,7 +380,151 @@ function isEligible(stage: Stage, action: ActionType) {
   }[action];
 }
 
-export function RelayApp({ messageVariant }: { messageVariant: "story" | "direct" }) {
+function CitizenJourney() {
+  const [state, dispatch] = useReducer(relayReducer, undefined, scenarios.breach.initial);
+  const [hindi, setHindi] = useState(false);
+
+  const isRouted = state.stage === "SUPPORT_ROUTED";
+  const isReviewing = state.stage === "PDA_FETCHED";
+  const isAccepted = state.stage === "ACCEPTED";
+  const progress = isAccepted ? 4 : isReviewing ? 3 : isRouted ? 2 : 1;
+  const citizenCopy = isAccepted
+    ? {
+        status: "Accepted",
+        tone: "ok" as Tone,
+        title: "Your certificate has been accepted.",
+        body: "The pension office has confirmed your Digital Life Certificate. You do not need to do anything else.",
+      }
+    : isReviewing
+      ? {
+          status: "Under review",
+          tone: "info" as Tone,
+          title: "The pension office is reviewing your certificate.",
+          body: "The office has received the same certificate you created. Your original proof and reference number remain unchanged.",
+        }
+      : isRouted
+        ? {
+            status: "Request sent",
+            tone: "info" as Tone,
+            title: "Your request has been sent to the pension office.",
+            body: "The pension office now owns the next step. You can return here and check the latest status with the same receipt.",
+          }
+        : {
+            status: "Update delayed",
+            tone: "warn" as Tone,
+            title: "Your certificate is safe. The pension office has not confirmed it yet.",
+            body: "Your Digital Life Certificate was created on time, but the expected one-day update has passed.",
+          };
+  const nextAction = isAccepted
+    ? null
+    : isReviewing
+      ? { type: "ACCEPT" as ActionType, label: "See latest decision" }
+      : isRouted
+        ? { type: "FETCH" as ActionType, label: "Check latest status" }
+        : { type: "ROUTE" as ActionType, label: "Ask pension office to review" };
+  const plainOwner = isAccepted ? "No action needed" : isReviewing || isRouted ? "Pension office" : "You can send a review request";
+  const agencyResponse = isAccepted ? "Accepted" : isReviewing ? "Under review" : isRouted ? "Request received" : "Not confirmed";
+
+  return (
+    <>
+      <a className="skip-link" href="#citizen-journey">Skip to certificate status</a>
+      <SiteHeader />
+      <main className="citizen-page" id="citizen-journey">
+        <section className="citizen-shell shell" aria-labelledby="citizen-title">
+          <div className="citizen-topbar">
+            <span><ShieldCheck weight="fill" aria-hidden="true" /> Citizen view · safe demonstration</span>
+            <Link href="/relay?view=reviewer">Open reviewer mode <ArrowRight aria-hidden="true" /></Link>
+          </div>
+
+          <div className="citizen-grid">
+            <article className="citizen-card">
+              <div className="citizen-person">
+                <div className="citizen-photo">
+                  <Image src="/hero-pensioner.png" alt="Fictional elderly Indian woman representing Shanti" fill priority sizes="112px" />
+                </div>
+                <div>
+                  <span>Namaste, Shanti ji</span>
+                  <strong>Digital Life Certificate</strong>
+                  <small>Fictional citizen · synthetic details</small>
+                </div>
+                <button className="language-button" type="button" aria-pressed={hindi} onClick={() => setHindi((value) => !value)}>
+                  {hindi ? "English" : "हिन्दी"}
+                </button>
+              </div>
+
+              <div className="citizen-status-copy" aria-live="polite">
+                <span className={`status status-${citizenCopy.tone}`}>{citizenCopy.status}</span>
+                <h1 id="citizen-title">{citizenCopy.title}</h1>
+                <p>{citizenCopy.body}</p>
+                {hindi ? <p className="citizen-hindi" lang="hi">आपका जीवन प्रमाण पत्र सुरक्षित है। नया प्रमाण पत्र बनाने की ज़रूरत नहीं है। अगला कदम पेंशन कार्यालय का है।</p> : null}
+              </div>
+
+              <div className="citizen-reassurance">
+                <Check weight="bold" aria-hidden="true" />
+                <div>
+                  <strong>You do not need to create another certificate.</strong>
+                  <span>Your original proof and receipt are preserved across every status check.</span>
+                </div>
+              </div>
+
+              <ol className="citizen-progress" aria-label={`Journey progress: step ${progress} of 4`}>
+                {["Certificate created", "Request sent", "Office reviewing", "Decision received"].map((label, index) => (
+                  <li key={label} className={index + 1 <= progress ? "is-complete" : ""} aria-current={index + 1 === progress ? "step" : undefined}>
+                    <span>{index + 1 < progress ? <Check weight="bold" aria-hidden="true" /> : index + 1}</span>
+                    <small>{label}</small>
+                  </li>
+                ))}
+              </ol>
+
+              {nextAction ? (
+                <div className="citizen-action">
+                  <div><span>Your next step</span><strong>{nextAction.label}</strong></div>
+                  <button className="button primary" type="button" onClick={() => dispatch({ type: nextAction.type })}>
+                    {nextAction.label} <ArrowRight aria-hidden="true" />
+                  </button>
+                </div>
+              ) : (
+                <div className="citizen-complete" role="status">
+                  <Check weight="bold" aria-hidden="true" />
+                  <div><strong>All done</strong><span>Keep this receipt for your records.</span></div>
+                  <a className="button primary" href="/mock-digital-life-certificate.pdf" download><DownloadSimple aria-hidden="true" /> Save certificate</a>
+                </div>
+              )}
+
+              {isRouted ? <p className="citizen-policy-note">This prototype also requests a temporary seven-day safeguard while the office reviews the certificate. It is a policy proposal, not current law or a payment guarantee.</p> : null}
+            </article>
+
+            <aside className="citizen-proof" aria-labelledby="citizen-proof-title">
+              <div className="citizen-proof-stamp">SYNTHETIC</div>
+              <div className="citizen-proof-heading">
+                <div><span>Your proof receipt</span><h2 id="citizen-proof-title">{state.receiptId}</h2></div>
+                <Receipt aria-hidden="true" />
+              </div>
+              <p>This one reference follows your certificate until the pension office makes a decision.</p>
+              <dl>
+                <div><dt>Certificate created</dt><dd>13 July, 9:12 AM</dd></div>
+                <div><dt>Created on time</dt><dd>Yes</dd></div>
+                <div><dt>Latest response</dt><dd>{agencyResponse}</dd></div>
+                <div><dt>Who acts next</dt><dd>{plainOwner}</dd></div>
+                <div><dt>Certificate ID</dt><dd>{state.pramaanId}</dd></div>
+              </dl>
+              <div className="citizen-proof-footer"><LockKey aria-hidden="true" /> No Aadhaar, PPO, bank, OTP, or biometric data is collected.</div>
+            </aside>
+          </div>
+
+          <div className="citizen-explainer" aria-label="What Pramaan Relay changes">
+            <div><span>01</span><strong>The citizen finishes once</strong><p>The original certificate is reused—not generated again.</p></div>
+            <div><span>02</span><strong>The process keeps an owner</strong><p>Every delay shows who is responsible for the next action.</p></div>
+            <div><span>03</span><strong>The decision comes back</strong><p>The citizen sees waiting, review, rejection, or acceptance clearly.</p></div>
+          </div>
+        </section>
+      </main>
+      <SiteFooter />
+    </>
+  );
+}
+
+function ReviewerRelayApp({ messageVariant }: { messageVariant: "story" | "direct" }) {
   const [state, dispatch] = useReducer(relayReducer, undefined, scenarios.breach.initial);
   const [hindi, setHindi] = useState(false);
   const [answer, setAnswer] = useState<"correct" | "incorrect" | null>(null);
@@ -433,6 +578,7 @@ export function RelayApp({ messageVariant }: { messageVariant: "story" | "direct
             <p className="hero-deck">Pramaan Relay makes delivery to a pension agency traceable, retryable, and accountable.</p>
             <div className="hero-actions">
               <a className="button primary" href="#prototype">Run the T+1 journey <ArrowDown aria-hidden="true" /></a>
+              <Link className="button secondary" href="/relay">Citizen view</Link>
               <button className="button text-button" type="button" onClick={() => dialogRef.current?.showModal()}>
                 See a proof receipt
               </button>
@@ -662,4 +808,14 @@ export function RelayApp({ messageVariant }: { messageVariant: "story" | "direct
       </dialog>
     </>
   );
+}
+
+export function RelayApp({
+  messageVariant,
+  viewMode = "citizen",
+}: {
+  messageVariant: "story" | "direct";
+  viewMode?: "citizen" | "reviewer";
+}) {
+  return viewMode === "reviewer" ? <ReviewerRelayApp messageVariant={messageVariant} /> : <CitizenJourney />;
 }
